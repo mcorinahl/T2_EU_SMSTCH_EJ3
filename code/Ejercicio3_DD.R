@@ -391,6 +391,9 @@ ggplot(interaction_power_grid,
   theme_minimal(base_size = 14)
 
 # Guardar resultados
-write_csv(power_results_main,      "power_curve_results_main_dd.csv")
-write_csv(power_vs_N,              "power_vsN_main_dd.csv")
-write_csv(interaction_power_grid,  "interaction_power_grid_dd.csv")
+
+if (!dir.exists("outcomes")) dir.create("outcomes")
+
+write_csv(power_results_main,      "outcomes/power_curve_results_main_dd.csv")
+write_csv(power_vs_N,              "outcomes/power_vsN_main_dd.csv")
+write_csv(interaction_power_grid,  "outcomes/interaction_power_grid_dd.csv")
