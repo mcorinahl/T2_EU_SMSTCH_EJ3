@@ -11,11 +11,11 @@
 # MODELO PRINCIPAL (SIN HETEROGENEIDAD)
 ############################################################
 
-# Elegimos un valor representativo de d para la tabla descriptiva
+# Valor representativo de d para la tabla descriptiva
 d_desc      <- 0.10                 
 deltas_desc <- c(d_desc / 2, d_desc) # eu cae 5 p.p., non_eu 10 p.p.
 
-# Generamos una sola réplica de datos simulados con ese d
+# Una sola réplica de datos simulados con ese d
 df_desc_main <- generate_data(
   N_ann      = N_ann,
   k          = k,
@@ -54,13 +54,13 @@ tab_by_treat_main
 # MODELO CON HETEROGENEIDAD
 ############################################################
 
-# Elegimos un par de deltas representativos para la interacción
+# Elegimos deltas representativos para la interacción
 # deltas_int[1] = penalización para non_eu con landlord nativo
 # deltas_int[2] = penalización para non_eu con landlord extranjero
 d_native_desc     <- 0.20   # p.ej. -20 p.p. frente a control (fuerte discriminación)
 d_non_native_desc <- 0.05   # p.ej. -5 p.p. frente a control (discriminación más débil)
 
-# Construimos una réplica del DGP con heterogeneidad  
+# Construimos una réplica con heterogeneidad  
 df_desc_hetero <- generate_data(
   N_ann      = N_ann,
   k          = k,

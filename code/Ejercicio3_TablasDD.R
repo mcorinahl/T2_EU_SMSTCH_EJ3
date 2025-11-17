@@ -6,7 +6,7 @@
 ########################################################################
 
 ############################################################
-# MODELO PRINCIPAL (SIN HETEROGENEIDAD)
+# MODELO PRINCIPAL
 ############################################################
 
 # Valor representativo de d para la tabla descriptiva
@@ -14,7 +14,7 @@ d_desc         <- 0.10
 delta_eu_desc  <- d_desc / 2   # penalización eu (coherente con diseño principal)
 delta_non_desc <- d_desc       # penalización non_eu
 
-# Construir diseño DeclareDesign para esos parámetros
+# Construir diseño para esos parámetros
 dm_desc <- make_design_main(
   N_ann     = N_ann,
   k         = k,
@@ -24,10 +24,10 @@ dm_desc <- make_design_main(
   alpha     = alpha
 )
 
-# Generar una sola réplica de datos del diseño (incluye Y, treatment, etc.)
+# Generar una sola réplica de datos del diseño
 df_desc_main <- draw_data(dm_desc$design)
 
-# Tabla 1: descriptivas generales (modelo principal)
+# Tabla 1: descriptivas generales
 tab_overall_main <- df_desc_main %>%
   summarise(
     N_obs         = n(),
@@ -41,7 +41,7 @@ tab_overall_main <- df_desc_main %>%
 
 tab_overall_main
 
-# Tabla 2: descriptivas por tratamiento (modelo principal)
+# Tabla 2: descriptivas por tratamiento
 tab_by_treat_main <- df_desc_main %>%
   group_by(treatment) %>%
   summarise(
@@ -64,7 +64,7 @@ tab_by_treat_main
 d_native_desc   <- 0.20   # fuerte discriminación de landlords nativos
 d_foreign_desc  <- 0.05   # discriminación más débil de landlords extranjeros
 
-# Construir diseño DeclareDesign con heterogeneidad
+# Construir diseño con heterogeneidad
 di_desc <- make_design_interact(
   N_ann        = N_ann,
   k            = k,
@@ -74,7 +74,7 @@ di_desc <- make_design_interact(
   alpha        = alpha
 )
 
-# Generar una réplica de datos del diseño heterogéneo
+# Generar una réplica de datos
 df_desc_hetero <- draw_data(di_desc$design)
 
 # Tabla 3: descriptivas generales para el escenario con heterogeneidad

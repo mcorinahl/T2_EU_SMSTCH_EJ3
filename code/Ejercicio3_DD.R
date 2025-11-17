@@ -28,7 +28,7 @@ set.seed(SEED)
 
 N_ann   <- 500      # anuncios (vacantes)
 k       <- 3        # solicitantes por anuncio (control, eu, non_eu)
-p0      <- 0.46     # tasa de respuesta base para control ≈ Erik
+p0      <- 0.46     # tasa de respuesta base para control
 alpha   <- 0.05
 nsim    <- 500      # número de simulaciones para poder
 d_grid  <- seq(0.01, 0.30, by = 0.02)  # grilla para efectos verdaderos
@@ -37,9 +37,9 @@ d_grid  <- seq(0.01, 0.30, by = 0.02)  # grilla para efectos verdaderos
 # DISEÑO 1: EFECTO PRINCIPAL non_eu vs control
 #########################################
 # Interpreta:
-#   - control  ≈ nombre sueco (Erik)
-#   - eu       ≈ inmigrante europeo (penalización moderada)
-#   - non_eu   ≈ inmigrante no europeo / árabe (penalización fuerte)
+#   - control  = nombre sueco (Erik)
+#   - eu       = inmigrante europeo (penalización moderada)
+#   - non_eu   = inmigrante no europeo / árabe (penalización fuerte)
 # Potenciales efectos verdaderos: 
 #   delta_eu  = d/2
 #   delta_non = d
@@ -69,7 +69,7 @@ make_design_main <- function(N_ann, k, p0, delta_eu, delta_non, alpha = 0.05) {
     )
   )
   
-  # 2. Modelo de resultado: fija prob. verdadera y genera Y
+  # 2. Modelo de resultado: fija probabilidad verdadera y genera Y
   outcome_model_main <- declare_step(
     handler = function(data) {
       data %>%
@@ -104,7 +104,7 @@ make_design_main <- function(N_ann, k, p0, delta_eu, delta_non, alpha = 0.05) {
     label      = "LPM_non_main"
   )
   
-  # 5. Diagnosandos: poder, sesgo, cobertura, etc.
+  # 5. poder, sesgo, cobertura, etc.
   diagnosands_main <- declare_diagnosands(
     mean_est   = mean(estimate),
     se_mean    = mean(std.error),
@@ -235,7 +235,7 @@ ggplot(power_vs_N, aes(x = N_ann, y = power)) +
 # Ahora: el efecto non_eu depende de si el landlord es nativo o extranjero.
 #   - Landlord nativo: p = p0 - delta_native   (discriminación fuerte)
 #   - Landlord extranjero: p = p0 - delta_foreign   (discriminación más débil)
-# El coeficiente de interacción d_non:landlord_foreign ≈ delta_native - delta_foreign
+# El coeficiente de interacción d_non: landlord_foreign = delta_native - delta_foreign
 
 make_design_interact <- function(N_ann, k, p0,
                                  delta_native, delta_foreign,
@@ -383,7 +383,7 @@ ggplot(interaction_power_grid,
   scale_fill_gradient(low = "white", high = "steelblue") +
   labs(
     title    = "Poder estadístico para detectar interacción",
-    subtitle = "Delta_nativo (discriminación fuerte) vs Delta_extranjero (discriminación más débil)",
+    subtitle = "Discriminación fuerte - Nativo vs Discriminación más débil - Extranjero",
     x        = expression(delta[native]),
     y        = expression(delta[foreign]),
     fill     = "Power"
