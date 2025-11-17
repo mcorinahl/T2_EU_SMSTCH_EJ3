@@ -27,7 +27,7 @@ p_load(
 )
 
 
-setwd("C:\Users\USUARIO\Documents\GitHub\T2_EU_SMSTCH_EJ3")
+setwd("C:/Users/USUARIO/Documents/GitHub/T2_EU_SMSTCH_EJ3")
 
 #########################################
 # PARÁMETROS
@@ -51,9 +51,9 @@ N_ann <- 500        # número de anuncios a muestrear
 k <- 3               # solicitantes por anuncio 
 T <- 3               # treatments (control + 2)
 # Baseline response rate (control)
-p0 <- 0.30           # tasa de respuesta favorable base en control
+p0 <- 0.46           # tasa de respuesta favorable base en control
 # Efecto verdadero (en diferencia de probabilidad) a explorar (vector)
-deltas <- seq(0.01, 0.10, by = 0.01)
+deltas <- seq(0.01, 0.30, by = 0.02)
 # Número de simulaciones
 nsim <- 500
 # Nivel de significancia
@@ -179,7 +179,7 @@ run_one_sim <- function(N_ann, k, p0, deltas, alpha = 0.05) {
   se  <- as.numeric(df_se[idx, col_se][[1]])
   pval <- as.numeric(df_se[idx, col_p][[1]])
   
-  # CI al 1 - alpha
+  # CI al 0.05
   z <- qnorm(1 - alpha / 2)
   ci_lower <- est - z * se
   ci_upper <- est + z * se
@@ -322,7 +322,7 @@ run_one_sim_interact <- function(N_ann, k, p0, deltas, debug = FALSE) {
       p = case_when(
         treatment == "control" ~ p0,
         # Mantenemos el efecto para eu en el baseline para esta interacción (sin efecto)
-        treatment == "eu" ~ p0, 
+        treatment == "eu" ~ p0 + 0.10, 
         # non_eu con landlord nativo: probabilidad más baja por deltas[1]
         treatment == "non_eu" & landlord_type %in% c("native") ~ p0 - deltas[1],
         # non_eu con landlord extranjero: probabilidad más baja por deltas[2]
@@ -425,8 +425,8 @@ print(one_test)
 # Grilla para deltas de interacción
 # De modo que siempre: d_native > d_non_native
 
-d_native_seq      <- seq(0.02, 0.12, by = 0.02)  # discriminación fuerte
-d_non_native_seq  <- seq(0.00, 0.06, by = 0.02)  # discriminación más débil
+d_native_seq      <- seq(0.02, 0.35, by = 0.05)  # discriminación fuerte
+d_non_native_seq  <- seq(0.00, 0.20, by = 0.05)  # discriminación más débil
 
 
 # Reducimos el número de simulaciones
@@ -470,6 +470,5 @@ ggplot(interaction_power_grid,
 # Guardar resultados
 write.csv(power_results, "power_curve_results.csv", row.names = FALSE)
 write.csv(interaction_power_grid, "interaction_power_grid.csv", row.names = FALSE)
-
-
+write.csv(power_vs_N, "power_vs_N.csv", row.names = FALSE)
 
