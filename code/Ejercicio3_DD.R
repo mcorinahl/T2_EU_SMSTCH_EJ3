@@ -12,7 +12,7 @@ rm(list = ls())
 require(pacman)
 p_load(
   DeclareDesign,   # núcleo de diseño (inquiries, estimators, diagnose_design)
-  fabricatr,       # generación de datos anidados
+  fabricatr,       # generación de datos
   estimatr,        # lm_robust con clusters
   tidyverse        # manipulación y gráficos
 )
@@ -32,6 +32,8 @@ p0      <- 0.46     # tasa de respuesta base para control
 alpha   <- 0.05
 nsim    <- 500      # número de simulaciones para poder
 d_grid  <- seq(0.01, 0.30, by = 0.02)  # grilla para efectos verdaderos
+
+if (!dir.exists("outcomes")) dir.create("outcomes")
 
 #########################################
 # DISEÑO 1: EFECTO PRINCIPAL non_eu vs control
@@ -166,17 +168,21 @@ power_results_main <- map_dfr(d_grid, function(d) {
 
 print(power_results_main)
 
+
 # Curva de poder vs MDE (efecto en non_eu)
-ggplot(power_results_main, aes(x = MDE, y = power)) +
+power_vs_MDE <- ggplot(power_results_main, aes(x = MDE, y = power)) +
   geom_line() + 
   geom_point() +
   ylim(0, 1) +
   labs(
-    title = "Power vs MDE (efecto non_eu vs control)",
+    title = "Poder vs MDE (efecto non_eu vs control)",
     x     = "Diferencia verdadera en probabilidad (MDE)",
-    y     = "Power"
+    y     = "Poder"
   ) +
   theme_minimal(base_size = 14)
+
+power_vs_MDE
+ggsave("outcomes/power_vs_MDE.png", power_vs_MDE, width = 10, height = 7, dpi = 300, bg = "white")
 
 #########################################
 # POWER vs N: tamaño de muestra (anuncios)
@@ -216,18 +222,21 @@ power_vs_N <- map_dfr(N_grid, function(NN) {
 
 print(power_vs_N)
 
-ggplot(power_vs_N, aes(x = N_ann, y = power)) +
+power_vs_N_plot <- ggplot(power_vs_N, aes(x = N_ann, y = power)) +
   geom_line() +
   geom_point() +
   ylim(0, 1) +
   labs(
-    title = "Power vs número de anuncios (efecto principal)",
-    subtitle = paste0("Delta_non_eu = ", delta_non_target,
-                      ", Delta_eu = ", delta_eu_target),
-    x = "Número de anuncios (N_ann)",
-    y = "Power"
+    title = "Poder vs número de anuncios",
+    subtitle = paste0("Delta non-EU = ", delta_non_target,
+                      ", Delta EU = ", delta_eu_target),
+    x = "Número de anuncios",
+    y = "Poder"
   ) +
   theme_minimal(base_size = 14)
+
+power_vs_N_plot
+ggsave("outcomes/power_vs_N_plot.png", power_vs_N_plot, width = 10, height = 7, dpi = 300, bg = "white")
 
 #########################################
 # DISEÑO 2: HETEROGENEIDAD POR ORIGEN DEL LANDLORD
@@ -391,22 +400,23 @@ print(head(interaction_power_grid, 10))
 summary(interaction_power_grid$power)
 
 # Heatmap de poder para la interacción
-ggplot(interaction_power_grid,
+interaction_heatmap <- ggplot(interaction_power_grid,
        aes(x = d_native, y = d_foreign, fill = power)) +
   geom_tile() +
   scale_fill_gradient(low = "white", high = "steelblue") +
   labs(
     title    = "Poder estadístico para detectar interacción",
-    subtitle = "Discriminación fuerte - Nativo vs Discriminación más débil - Extranjero",
+    subtitle = "Discriminación fuerte vs Discriminación más débil",
     x        = expression(delta[native]),
     y        = expression(delta[foreign]),
-    fill     = "Power"
+    fill     = "Poder"
   ) +
   theme_minimal(base_size = 14)
 
-# Guardar resultados
+interaction_heatmap
+ggsave("outcomes/interaction_heatmap.png", interaction_heatmap, width = 10, height = 7, dpi = 300, bg = "white")
 
-if (!dir.exists("outcomes")) dir.create("outcomes")
+# Guardar resultados
 
 write_csv(power_results_main,      "outcomes/power_curve_results_main_dd.csv")
 write_csv(power_vs_N,              "outcomes/power_vsN_main_dd.csv")
