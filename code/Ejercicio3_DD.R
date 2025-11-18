@@ -241,12 +241,14 @@ make_design_interact <- function(N_ann, k, p0,
                                  delta_native, delta_foreign,
                                  alpha = 0.05) {
   
+  # 1. Población: anuncios y solicitantes
   population_int <- declare_population(
     anuncios = add_level(
       N               = N_ann,
       anuncio_id      = 1:N,
       landlord_native = rbinom(N, 1, 0.8),
       landlord_type   = ifelse(landlord_native == 1, "native", "foreign"),
+      landlord_foreign = as.numeric(ifelse(landlord_native == 1, 0, 1)), # 0/1
       city            = sample(c("Stockholm", "Gothenburg", "Malmo", "Other"),
                                size = N, replace = TRUE)
     ),
@@ -257,53 +259,64 @@ make_design_interact <- function(N_ann, k, p0,
         applicant_idx == 0 ~ "control",
         applicant_idx == 1 ~ "eu",
         TRUE               ~ "non_eu"
-      )
+      ),
+      d_non = as.numeric(case_when(
+        applicant_idx == 0 ~ 0,
+        applicant_idx == 1 ~ 0,
+        TRUE               ~ 1
+      )),
+      d_eu = as.numeric(case_when(
+        applicant_idx == 0 ~ 0,
+        applicant_idx == 1 ~ 1,
+        TRUE               ~ 0
+      ))
     )
   )
   
+  # 2. Modelo de resultado con heterogeneidad
   outcome_model_int <- declare_step(
     handler = function(data) {
       data %>%
         mutate(
-          landlord_foreign = as.numeric(landlord_type == "foreign"),
           p = case_when(
             treatment == "control" ~ p0,
-            treatment == "eu"      ~ p0,  # sin efecto en este bloque de heterogeneidad
+            treatment == "eu"      ~ p0,  # sin efecto eu en este bloque
             treatment == "non_eu" & landlord_type == "native"  ~ p0 - delta_native,
             treatment == "non_eu" & landlord_type == "foreign" ~ p0 - delta_foreign,
             TRUE ~ p0
           ),
           p = pmin(pmax(p, 0), 1),
-          Y = rbinom(n(), 1, p),
-          d_non = as.numeric(treatment == "non_eu")
+          Y = rbinom(n(), 1, p)
         )
     },
     label = "outcome_model_int"
   )
   
-  # Inquiry (parámetro de interacción):
-  #   (efecto non_eu con foreign) - (efecto non_eu con native)
-  # = (-delta_foreign) - (-delta_native) = delta_native - delta_foreign
+  # 3. Inquiry de interacción: diferencia de penalizaciones
+  true_INT <- delta_native - delta_foreign
+  
   inquiry_int <- declare_inquiry(
-    INT = delta_native - delta_foreign,
+    INT = true_INT,
     label = "INT_true"
   )
   
+  # 4. Estimador: coeficiente de la interacción d_non:landlord_foreign
   estimator_int <- declare_estimator(
-    Y ~ d_non * landlord_foreign,
-    model      = lm_robust,
-    clusters   = anuncio_id,
-    term       = "d_non:landlord_foreign",
-    inquiry    = "INT_true",
-    label      = "LPM_interaction"
+    formula  = Y ~ d_non + d_eu + d_non:landlord_foreign,
+    model    = lm_robust,
+    clusters = anuncio_id,
+    term     = "d_non:landlord_foreign",
+    inquiry  = "INT_true",
+    label    = "LPM_interaction"
   )
   
+  # 5. Diagnosandos: usamos directamente el valor verdadero `true_INT`
   diagnosands_int <- declare_diagnosands(
     mean_est = mean(estimate, na.rm = TRUE),
     se_mean  = mean(std.error, na.rm = TRUE),
-    bias     = mean(estimate - estimand, na.rm = TRUE),
+    bias     = mean(estimate - true_INT, na.rm = TRUE),
     power    = mean(p.value < alpha, na.rm = TRUE),
-    coverage = mean(conf.low <= estimand & conf.high >= estimand, na.rm = TRUE)
+    coverage = mean(conf.low <= true_INT & conf.high >= true_INT, na.rm = TRUE)
   )
   
   design_int <- population_int +
@@ -317,6 +330,7 @@ make_design_interact <- function(N_ann, k, p0,
   )
 }
 
+
 #########################################
 # SIMULACIÓN DE PODER: INTERACCIÓN
 #########################################
@@ -324,7 +338,7 @@ make_design_interact <- function(N_ann, k, p0,
 d_native_seq  <- seq(0.02, 0.35, by = 0.05)  # discriminación fuerte (nativos)
 d_foreign_seq <- seq(0.00, 0.20, by = 0.05)  # discriminación más débil (foreign)
 
-nsim_int <- 400
+nsim_int <- 500
 
 interaction_power_grid <- expand.grid(
   d_native  = d_native_seq,
@@ -397,3 +411,4 @@ if (!dir.exists("outcomes")) dir.create("outcomes")
 write_csv(power_results_main,      "outcomes/power_curve_results_main_dd.csv")
 write_csv(power_vs_N,              "outcomes/power_vsN_main_dd.csv")
 write_csv(interaction_power_grid,  "outcomes/interaction_power_grid_dd.csv")
+
